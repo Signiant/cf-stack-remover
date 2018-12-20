@@ -2,15 +2,19 @@
 delete specified stacks from cloudformation
 
 # Purpose
-
+Remove CloudFormation stacks from Amazon services. At time when manually deleting the stacks is possiblem it's certainly a pain. Obviously the solution is to automate the process. This solution will perform the following ways to delete the stacks within CloudFormation:
+* Group delete stacks based on the StackStatus of the stacks
+* Group delete Stacks based on the regex string which match a set of stacks
+* Group delete 
 
 # Prerequisites
-
+* Python installed
+* boto3 module instsalled
+* Either an AWS role (if running on EC2) or an access key/secret key
 
 # Usage
-cf  
 
-The easiest way to run the tool is from docker (because docker rocks).
+The easiest way to run the tool is from docker (because docker rocks) or from any python environment.
 You will need to pass in variables specific to the ECS task you want to affect
 
 ```bash
