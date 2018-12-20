@@ -8,8 +8,8 @@ COPY cf_delete_stacks.py /cf_delete_stacks.py
 RUN pip install boto3
 # RUN chmod a+x /ecs_cluster_scaledown.py
 
-ENTRYPOINT ["python", "/cf_delete_stacks.py"]
+#ENTRYPOINT ["python", "/cf_delete_stacks.py"]
+ENTRYPOINT ["sh", "/run_cf_stack_remover.sh"]
 
 CMD ["--help"]
 
-# add volume
