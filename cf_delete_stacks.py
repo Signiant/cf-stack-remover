@@ -29,7 +29,9 @@ def delete_cloudformation_stack(cloud_session, contain_string, stack_status=["RO
     if len(del_list) == 0:
         logging.info("No stack with name matching: '{0}'".format(contain_string))
     else:
-        logging.info("Stacks to be deleted: {0}".format(del_list))
+        logging.info("Stacks to be deleted:")
+        for s_name in del_list:
+            logging.info("\t{0}".format(s_name))
 
     if not dryrun:
         logging.info("Dry Run not selected - delete matching stacks from cloudformation")
@@ -77,9 +79,11 @@ if __name__ == "__main__":
         # parser.add_argument("--aws-access-key-id", help="AWS Access Key ID", dest='aws_access_key', required=False)
         # parser.add_argument("--aws-secret-access-key", help="AWS Secret Access Key", dest='aws_secret_key',
         #                      required=False)
-        parser.add_argument("--stack-status", help="Stack status match to be deleted StackName", nargs='+', dest='stack_status',
+        parser.add_argument("--stack-status", help="Stack status match to be deleted StackName. "
+                                                   "Example: ROLLBACK_COMPLETE", nargs='+', dest='stack_status',
                             required=True)
-        parser.add_argument("--contain-string", help="Regex String that match to be deleted StackName", dest='contain_string',
+        parser.add_argument("--contain-string", help="Regex String that match to be deleted StackName. Example: A.* ",
+                            dest='contain_string',
                             required=False)
         parser.add_argument("--region", help="The AWS region the stack is in", dest='region', required=True)
         parser.add_argument("--profile", help="The name of an aws cli profile to use.", dest='profile', default=None,
