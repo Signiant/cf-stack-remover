@@ -20,7 +20,6 @@ def delete_cloudformation_stack(cloud_session, contain_string, stack_status="ROL
 
     # convert string to list for aws list_stacks api
     stack_status_list = stack_status.split(",")
-    logging.info("Attempting to delete stacks contain str '{0}' with status: {1}".format(contain_string,stack_status))
     print("Attempting to delete stacks contain str '{0}' with status: {1}".format(contain_string,stack_status))
     response = cloud_session.list_stacks(StackStatusFilter=stack_status_list)
     for i in response['StackSummaries']:
@@ -32,21 +31,16 @@ def delete_cloudformation_stack(cloud_session, contain_string, stack_status="ROL
     del_list = _filter_list(stack_list, contain_string)
 
     if len(del_list) == 0:
-        logging.info("No stack with name matching: '{0}'".format(contain_string))
         print("No stack with name matching: '{0}'".format(contain_string))
     else:
-        logging.info("Stacks to be deleted:")
         print("Stacks to be deleted:")
         for s_name in del_list:
-            logging.info("\t{0}".format(s_name))
             print("\t{0}".format(s_name))
 
     if dryrun != "True":
-        logging.info("Dry Run not selected - delete matching stacks from cloudformation")
         print("Dry Run not selected - delete matching stacks from cloudformation")
         _delete_stacks(cloud_session, del_list)
     else:
-        logging.info("Dry Run selected - will NOT delete any stacks from cloudformation")
         print("Dry Run selected - will NOT delete any stacks from cloudformation")
 
 def _filter_list(a_list, regex_str):
@@ -70,13 +64,13 @@ def _delete_stacks(cloud_session, stack_list):
     """
     # delete stacks from the list
     result = ""
-    logging.info("In Delete stacks function ")
+    print("In Delete stacks function ")
     for stack_name in stack_list:
-        logging.info("Delete stack with name: {0}".format(stack_name))
+        print("Delete stack with name: {0}".format(stack_name))
         response = cloud_session.delete_stack(
             StackName=stack_name
         )
-        logging.debug("Delete Response: {0}".format(response))
+        print("Delete Response: {0}".format(response))
 
 
 def lambda_handler(event, context):
@@ -98,7 +92,7 @@ def lambda_handler(event, context):
     if 'DRYRUN' in os.environ:
         dryrun = os.environ['DRYRUN']
 
-    logging.info("AWS Region: {0}".format(region))
+    print("AWS Region: {0}".format(region))
     SESSION = boto3.session.Session(region_name=region)
     cf = SESSION.client('cloudformation')
 
