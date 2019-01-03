@@ -43,6 +43,7 @@ def delete_cloudformation_stack(cloud_session, contain_string, stack_status="ROL
     else:
         print("Dry Run selected - will NOT delete any stacks from cloudformation")
 
+
 def _filter_list(a_list, regex_str):
     """
     filter a list of string by regex
@@ -64,13 +65,12 @@ def _delete_stacks(cloud_session, stack_list):
     """
     # delete stacks from the list
     result = ""
-    print("In Delete stacks function ")
+
     for stack_name in stack_list:
         print("Delete stack with name: {0}".format(stack_name))
         response = cloud_session.delete_stack(
             StackName=stack_name
         )
-        print("Delete Response: {0}".format(response))
 
 
 def lambda_handler(event, context):
@@ -97,7 +97,6 @@ def lambda_handler(event, context):
     cf = SESSION.client('cloudformation')
 
     delete_cloudformation_stack(cf, contain_string=contain_string, stack_status=stack_status, dryrun=dryrun)
-
 
 
 if __name__ == "__main__":
