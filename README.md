@@ -12,13 +12,36 @@ Remove CloudFormation stacks from Amazon services. At time when manually deletin
 * boto3 module instsalled
 * Either an AWS role (if running on EC2) or an access key/secret key
 
+# AWS Lambda/Cloudformation deployment
+
+Manually creation of the template.yaml file
+
+```
+aws cloudformation package \
+    --template-file template.yaml \
+    --s3-bucket dev2-uswest2-lambda-deploy \
+    --s3-prefix lambda-stack-remover \
+    --output-template-file packaged-template.yaml \
+    --profile dev2
+```
+Above command put template in bucket and stored at dev2-uswest2-lambda-deploy at lambda-stack-remover folder at dev2 user
+
+```
+aws cloudformation deploy  \
+  --capabilities CAPABILITY_IAM \
+  --template-file ./packaged-template.yaml  \
+  --stack-name cloudformation-stack-remover  \
+  --parameter-overrides StackStatus=ROLLBACK_COMPLETE ContainString=.* Dryrun=False Region=us-east-1 ExpireDays=30  \
+  --profile dev2  \
+  --region us-east-1
+```
+
 # Usage
 
 The easiest way to run the tool is from docker (because docker rocks) or from any python environment.
 You will need to pass in variables specific to the ECS task you want to affect
 
-```bash
-
+```
 usage: lambda_cf_delete_stacks.py [-h] --stack-status STACK_STATUS
                                   [STACK_STATUS ...]
                                   [--contain-string CONTAIN_STRING]
@@ -43,6 +66,5 @@ optional arguments:
   --profile PROFILE     The name of an aws cli profile to use.
   --verbose             Turn on DEBUG logging
   --dryrun              Do a dryrun - no changes will be performed
-
-
+```
 
