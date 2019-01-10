@@ -18,11 +18,14 @@ The easiest way to run the tool is from docker (because docker rocks) or from an
 You will need to pass in variables specific to the ECS task you want to affect
 
 ```bash
-usage: cf_delete_stacks.py [-h] --stack-status STACK_STATUS [STACK_STATUS ...]
-                           [--contain-string CONTAIN_STRING] --region REGION
-                           [--profile PROFILE] [--verbose] [--dryrun]
 
-cloudformation_stack_delete
+usage: lambda_cf_delete_stacks.py [-h] --stack-status STACK_STATUS
+                                  [STACK_STATUS ...]
+                                  [--contain-string CONTAIN_STRING]
+                                  [--expire-days EXPIRE_DAYS] --region REGION
+                                  [--profile PROFILE] [--verbose] [--dryrun]
+
+Perform deletion on AWS cloudformation stacks based on criterias listed
 
 optional arguments:
   -h, --help            show this help message and exit
