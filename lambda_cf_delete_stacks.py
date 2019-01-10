@@ -6,7 +6,8 @@ import os
 from datetime import datetime, timezone
 
 
-def delete_cloudformation_stack(cloud_session, contain_string, stack_status="ROLLBACK_COMPLETE", dryrun="False"):
+def delete_cloudformation_stack(cloud_session, contain_string, stack_status="ROLLBACK_COMPLETE", expire_days = 30,
+                                dryrun="False"):
     """
     V2.0
     Delete stack based on contain_strings and stack_status
@@ -21,7 +22,8 @@ def delete_cloudformation_stack(cloud_session, contain_string, stack_status="ROL
 
     # convert string to list for aws list_stacks api
     stack_status_list = stack_status.split(",")
-    print("Attempting to delete stacks contain str '{0}' with status: {1}".format(contain_string, stack_status))
+    print("Attempting to delete stacks contain str '{0}' with status: {1} created more than {2} days ago"
+          "".format(contain_string,stack_status, expire_days))
     response = cloud_session.list_stacks(StackStatusFilter=stack_status_list)
     for i in response['StackSummaries']:
 
@@ -30,9 +32,10 @@ def delete_cloudformation_stack(cloud_session, contain_string, stack_status="ROL
 
         stack_name = i['StackName']
         stack_reg_match = _filter_name(stack_name, contain_string)
-        if 'DeletionTime' in i and stack_date_diff > 30 and stack_reg_match:
+        if 'DeletionTime' in i and stack_date_diff > expire_days and stack_reg_match:
+
             stack_list.append(stack_name)
-            print("\t{0} created {1} days ago".format(stack_name, stack_date_diff))
+            print("\t{0} created {1} days ago".format(stack_name,stack_date_diff))
 
     # match regular expressions from contain_string
     del_list = _filter_list(stack_list, contain_string)
@@ -47,7 +50,7 @@ def delete_cloudformation_stack(cloud_session, contain_string, stack_status="ROL
         print("Dry Run selected - will NOT delete any stacks from cloudformation")
 
 
-def _filter_name(stack_name, regex_str):
+def _filter_name(stack_name,regex_str):
     """
     filter a list of string by regex
     :param stack_name:
@@ -55,7 +58,6 @@ def _filter_name(stack_name, regex_str):
     :return: if stack name is in regex
     """
     return bool(re.search(regex_str, stack_name))
-
 
 def _filter_list(a_list, regex_str):
     """
@@ -113,12 +115,13 @@ def lambda_handler(event, context):
 
     if 'EXPIRE_DAYS' in os.environ:
         expire_days = os.environ['EXPIRE_DAYS']
+        expire_days = int(expire_days)
 
     print("AWS Region: {0}".format(region))
     SESSION = boto3.session.Session(region_name=region)
     cf = SESSION.client('cloudformation')
 
-    delete_cloudformation_stack(cf, contain_string=contain_string, stack_status=stack_status, expire_days=expire_days,
+    delete_cloudformation_stack(cf, contain_string=contain_string, stack_status=stack_status, expire_days = expire_days,
                                 dryrun=dryrun)
 
 
@@ -126,7 +129,8 @@ if __name__ == "__main__":
 
     LOG_FILENAME = 'cloudformation_stack_delete.log'
 
-    parser = argparse.ArgumentParser(description='cloudformation_stack_delete')
+    parser = argparse.ArgumentParser(description='Perform deletion on AWS cloudformation stacks based on criterias '
+                                                 'listed ')
 
     # parser.add_argument("--aws-access-key-id", help="AWS Access Key ID", dest='aws_access_key', required=False)
     # parser.add_argument("--aws-secret-access-key", help="AWS Secret Access Key", dest='aws_secret_key',
@@ -134,8 +138,12 @@ if __name__ == "__main__":
     parser.add_argument("--stack-status", help="Stack status match to be deleted StackName. "
                                                "Example: ROLLBACK_COMPLETE", nargs='+', dest='stack_status',
                         required=True)
-    parser.add_argument("--contain-string", help="Regex String that match to be deleted StackName. Example: A.* ",
+    parser.add_argument("--contain-string", help="Regex String that match to be deleted StackName. Example: 'A.*' ",
                         dest='contain_string',
+                        required=False)
+    parser.add_argument("--expire-days", help="days since creation of the stack to be deleted. Example: 30 will delete "
+                                              "all stacks that are older than 30 days",
+                        dest='expire_days', type=int,
                         required=False)
     parser.add_argument("--region", help="The AWS region the stack is in", dest='region', required=True)
     parser.add_argument("--profile", help="The name of an aws cli profile to use.", dest='profile', default=None,
@@ -171,9 +179,14 @@ if __name__ == "__main__":
     cf = SESSION.client('cloudformation')
 
     logging.info("AWS Region: {0}".format(args.region))
-    dryrun = str(args.dryrun)
+    dryrun=str(args.dryrun)
+
+    if not args.expire_days:
+        day_expire = 30
+    else:
+        day_expire = args.expire_days
     delete_cloudformation_stack(cf, contain_string=args.contain_string, stack_status=args.stack_status[0],
-                                dryrun=dryrun)
+                                expire_days = day_expire, dryrun=dryrun)
 
 
 

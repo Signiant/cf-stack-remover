@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Lambda function which deletes 'expired' CloudService Stacks
+
+Parameters:
+  StackStatus:
+    Type: String
+    Default: ""
+  ContainString:
+    Type: String
+    Default: ""
+  Region:
+    Type: String
+    Default: ""
+  ExpireDays:
+    Type: Number
+    Default: 0
+  Dryrun:
+    Type: String
+    Default: ""
+
+Resources:
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            - logs:DescribeLogStreams
+            Effect: Allow
+            Resource:
+            - '*'
+          - Action:
+            - "cloudformation:ListStacks"
+            - "cloudformation:DeleteStack"
+            - "iam:DeleteRolePolicy"
+            - "iam:DeleteRole"
+            - "iam:RemoveRoleFromInstanceProfile"
+            - "iam:DeleteInstanceProfile"
+            - "ec2:DeleteSecurityGroup"
+            - "ec2:DescribeInstances"
+            - "elasticbeanstalk:TerminateEnvironment"
+            Effect: Allow
+            Resource:
+            - '*'
+          Version: "2012-10-17"
+        PolicyName: "AllowLogsandCloudformation"
+
+  cfStackDeleter:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_cf_delete_stacks.lambda_handler
+      Runtime: python3.6
+      CodeUri: .
+      Description: Lambda function which deletes 'expired' CloudService Stacks (based on env variables)
+      MemorySize: 128
+      Timeout: 300
+      Role: !GetAtt ExecutionRole.Arn
+      Environment:
+        Variables:
+          STACK_STATUS: !Ref StackStatus
+          CONTAIN_STRING: !Ref ContainString
+          REGION: !Ref Region
+          EXPIRE_DAYS: !Ref ExpireDays
+          DRYRUN: !Ref Dryrun
+
+  lambdaScheduledRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: "Run stack-remover lambda every first day of the month at 0101 GMT"
+      # Set the cron to run every first day of the month at 01:01 GMT (lambdas clocks are GMT) to make sure we handle
+      # Standard time as well as Daylight Savings time - this means a policy can actually be active for 1 hour past expiry
+      # during daylight savings times
+      ScheduleExpression: "cron(1 1 1 * ? *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !GetAtt cfStackDeleter.Arn
+          Id: "cf_Stack_Deleter"
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt lambdaScheduledRule.Arn
+      FunctionName: !GetAtt cfStackDeleter.Arn
