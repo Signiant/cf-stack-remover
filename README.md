@@ -27,10 +27,19 @@ cloudformation_stack_delete
 optional arguments:
   -h, --help            show this help message and exit
   --stack-status STACK_STATUS [STACK_STATUS ...]
-                        Stack status match to be deleted StackName
+                        Stack status match to be deleted StackName. Example:
+                        ROLLBACK_COMPLETE
   --contain-string CONTAIN_STRING
-                        Regex String that match to be deleted StackName
+                        Regex String that match to be deleted StackName.
+                        Example: 'A.*'
+  --expire-days EXPIRE_DAYS
+                        days since creation of the stack to be deleted.
+                        Example: 30 will delete all stacks that are older than
+                        30 days
   --region REGION       The AWS region the stack is in
   --profile PROFILE     The name of an aws cli profile to use.
   --verbose             Turn on DEBUG logging
   --dryrun              Do a dryrun - no changes will be performed
+
+
+
