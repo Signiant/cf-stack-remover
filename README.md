@@ -19,7 +19,7 @@ Manually creation of the template.yaml file
 ```
 aws cloudformation package \
     --template-file template.yaml \
-    --s3-bucket dev2-uswest2-lambda-deploy \
+    --s3-bucket dev2-useast1-lambda-deploy \
     --s3-prefix lambda-stack-remover \
     --output-template-file packaged-template.yaml \
     --profile dev2
